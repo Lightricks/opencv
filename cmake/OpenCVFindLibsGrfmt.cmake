@@ -70,20 +70,14 @@ endif()
 
 # --- libjpeg (optional) ---
 if(WITH_JPEG)
-  if(BUILD_JPEG)
-    ocv_clear_vars(JPEG_FOUND)
-  else()
-    include(FindJPEG)
-  endif()
+  ocv_clear_vars(JPEG_FOUND JPEG_LIBRARY JPEG_LIBRARIES JPEG_INCLUDE_DIR)
 
-  if(NOT JPEG_FOUND)
-    ocv_clear_vars(JPEG_LIBRARY JPEG_LIBRARIES JPEG_INCLUDE_DIR)
-
-    set(JPEG_LIBRARY libjpeg)
-    set(JPEG_LIBRARIES ${JPEG_LIBRARY})
-    add_subdirectory("${OpenCV_SOURCE_DIR}/3rdparty/libjpeg")
-    set(JPEG_INCLUDE_DIR "${${JPEG_LIBRARY}_SOURCE_DIR}")
-  endif()
+	set(JPEG_LIBRARY libturbojpeg)
+	set(JPEG_LIBRARIES ${JPEG_LIBRARY})
+	set(LTJ_PATH "${OpenCV_SOURCE_DIR}/3rdparty/libturbojpeg-binaries")
+	set(JPEG_INCLUDE_DIR "${LTJ_PATH}/include")
+	set(JPEG_LIB_DIR "${LTJ_PATH}/lib")
+	add_subdirectory("${LTJ_PATH}")
 
   ocv_parse_header("${JPEG_INCLUDE_DIR}/jpeglib.h" JPEG_VERSION_LINES JPEG_LIB_VERSION)
   set(HAVE_JPEG YES)

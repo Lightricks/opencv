@@ -280,7 +280,6 @@ set(OPENCV_EXTRA_EXE_LINKER_FLAGS_DEBUG   "${OPENCV_EXTRA_EXE_LINKER_FLAGS_DEBUG
 
 # set default visibility to hidden
 if(CMAKE_COMPILER_IS_GNUCXX AND CMAKE_OPENCV_GCC_VERSION_NUM GREATER 399)
-  add_extra_compiler_option(-fvisibility=hidden)
   add_extra_compiler_option(-fvisibility-inlines-hidden)
 endif()
 

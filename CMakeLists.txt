@@ -293,6 +293,11 @@ OCV_OPTION(BUILD_TBB                "Download and build TBB from source" ANDROID
 OCV_OPTION(BUILD_IPP_IW             "Build IPP IW from source"           NOT MINGW IF (X86_64 OR X86) AND NOT WINRT )
 OCV_OPTION(BUILD_ITT                "Build Intel ITT from source"        NOT MINGW IF (X86_64 OR X86) AND NOT WINRT AND NOT APPLE_FRAMEWORK )
 
+# OpenCV modules to skip
+# ===================================================
+OCV_OPTION(BUILD_opencv_dnn        "Disable dnn module because of protobuf version discrepancy" OFF)
+OCV_OPTION(BUILD_opencv_stitching  "Disable stitching module because of compilation errors" OFF)
+
 # OpenCV installation options
 # ===================================================
 OCV_OPTION(INSTALL_CREATE_DISTRIB   "Change install rules to build the distribution package" OFF )
