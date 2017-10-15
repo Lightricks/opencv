@@ -101,6 +101,12 @@
 #include "opencv2/viz.hpp"
 #endif
 
+//libturbojpeg included here as a submodule.
+#ifdef HAVE_LIBTURBOJPEG
+#include "opencv2/libturbojpeg/jpeglib.h"
+#include "opencv2/libturbojpeg/turbojpeg.h"
+#endif
+
 // Finally CUDA specific entries are checked and added
 #ifdef HAVE_OPENCV_CUDAARITHM
 #include "opencv2/cudaarithm.hpp"
