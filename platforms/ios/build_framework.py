@@ -41,7 +41,7 @@ def execute(cmd, cwd = None):
         raise Exception("Child returned:", retcode)
 
 def getXCodeMajor():
-    ret = check_output(["xcodebuild", "-version"])
+    ret = check_output(["xcodebuild", "-version"]).decode('utf-8')
     m = re.match(r'Xcode\s+(\d+)\..*', ret, flags=re.IGNORECASE)
     if m:
         return int(m.group(1))
@@ -137,10 +137,12 @@ class Builder:
             "cmake",
             "-GXcode",
             "-DAPPLE_FRAMEWORK=ON",
+            "-DOPENCV_SUPPRESS_DEPRECATIONS=ON",
             "-DCMAKE_INSTALL_PREFIX=install",
             "-DCMAKE_BUILD_TYPE=%s" % self.getConfiguration(),
             "-DOPENCV_INCLUDE_INSTALL_PATH=include",
-            "-DOPENCV_3P_LIB_INSTALL_PATH=lib/3rdparty"
+            "-DOPENCV_3P_LIB_INSTALL_PATH=lib/3rdparty",
+            "-DOPENCV_LICENSES_INSTALL_PATH=licenses",
         ] + ([
             "-DBUILD_SHARED_LIBS=ON",
             "-DCMAKE_MACOSX_BUNDLE=ON",
@@ -189,6 +191,7 @@ class Builder:
                 "-sdk", target.lower(),
                 "-configuration", self.getConfiguration(),
                 "-parallelizeTargets",
+                "-UseModernBuildSystem=NO",
                 "-jobs", str(multiprocessing.cpu_count()),
             ] + (["-target","ALL_BUILD"] if self.dynamic else [])
 
