@@ -491,6 +491,10 @@ endif()
 
 set(OPENCV_MATHJAX_RELPATH "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0" CACHE STRING "URI to a MathJax installation")
 
+# OpenCV modules to skip
+# ===================================================
+OCV_OPTION(BUILD_opencv_stitching  "Disable stitching module because of compilation errors" OFF)
+
 # ----------------------------------------------------------------------------
 #  Get actual OpenCV version number from sources
 # ----------------------------------------------------------------------------
