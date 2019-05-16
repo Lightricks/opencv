@@ -1,0 +1,25 @@
+version: 2
+jobs:
+  build:
+    macos:
+      xcode: "10.2.0"
+    steps:
+      - checkout
+      - run:
+          name: Fetch submodules
+          command: git submodule update --init --recursive -j 16
+      - run:
+          name: Install dependency tools
+          command: |
+            brew install cmake
+      - run:
+          name: Build opencv
+          command: |
+            mkdir out
+            python platforms/ios/build_framework.py --contrib opencv_contrib --iphoneos_archs arm64 --iphonesimulator_archs x86_64 out
+            zip -r opencv_ios.zip out/
+      - store_artifacts:
+          path: opencv_ios.zip
+          destination: artifacts
+
+
