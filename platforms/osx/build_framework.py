@@ -21,7 +21,7 @@ class OSXBuilder(Builder):
         buildcmd = [
             "xcodebuild",
             "MACOSX_DEPLOYMENT_TARGET=" + os.environ['MACOSX_DEPLOYMENT_TARGET'],
-            "ARCHS=%s" % archs[0],
+            "ARCHS=arm64",
             "-sdk", target.lower(),
             "-configuration", "Debug" if self.debug else "Release",
             "-parallelizeTargets",

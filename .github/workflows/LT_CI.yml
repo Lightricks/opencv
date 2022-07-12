@@ -14,10 +14,13 @@ jobs:
         mkdir out
         mkdir out/iphoneos
         mkdir out/iphonesimulator
+        mkdir out/osx
+
         mkdir out/xcframework
         python platforms/ios/build_framework.py --contrib opencv_contrib --iphoneos_archs arm64 out/iphoneos
+        python platforms/osx/build_framework.py --contrib opencv_contrib out/osx
         python platforms/ios/build_framework.py --contrib opencv_contrib --iphonesimulator_archs "arm64,x86_64" out/iphonesimulator
-        xcodebuild -create-xcframework -framework out/iphoneos/opencv2.framework -framework out/iphonesimulator/opencv2.framework -output out/xcframework/opencv2.xcframework
+        xcodebuild -create-xcframework -framework out/iphoneos/opencv2.framework -framework out/osx/opencv2.framework -framework out/iphonesimulator/opencv2.framework -output out/xcframework/opencv2.xcframework
         zip --symlinks -r opencv_ios_xcframework.zip out/xcframework/opencv2.xcframework
         zip --symlinks -r opencv_ios_build_data.zip out/iphoneos/build out/iphonesimulator/build
     - uses: actions/upload-artifact@v2
