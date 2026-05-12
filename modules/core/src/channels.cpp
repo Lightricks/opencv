@@ -83,7 +83,14 @@ static MixChannelsFunc getMixchFunc(int depth)
     {
         mixChannels8u, mixChannels8u, mixChannels16u,
         mixChannels16u, mixChannels32s, mixChannels32s,
-        mixChannels64s, 0
+        // Upstream OpenCV leaves the CV_16F slot unset here, so CPU
+        // mixChannels/extractChannel/insertChannel assert when called on
+        // half-float Mats. Lightricks uses CV_16F Mats for Metal half-float
+        // textures and tensors, including channel slicing/padding. mixChannels
+        // only copies channel storage; it does not interpret numeric values.
+        // Mapping CV_16F to the 16-bit implementation preserves the exact
+        // half-float bit pattern while enabling the missing dispatch entry.
+        mixChannels64s, mixChannels16u
     };
 
     return mixchTab[depth];
