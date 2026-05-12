@@ -1,0 +1,130 @@
+name: Build XCFrameworks
+run-name: Build XCFrameworks
+on: [push, pull_request]
+
+jobs:
+  build-ios-framework:
+    runs-on: macos-latest-xlarge
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - archs: arm64
+            output: iphoneos
+            arch_flag: --iphoneos_archs
+          - archs: arm64
+            output: iphonesimulator
+            arch_flag: --iphonesimulator_archs
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Build Release
+      env:
+        IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+      run: |-
+        mkdir -p out/${{ matrix.output }}
+        python3 platforms/ios/build_framework.py --iphoneos_deployment_target $IPHONEOS_DEPLOYMENT_TARGET --contrib opencv_contrib --build_only_specified_archs ${{ matrix.arch_flag }} ${{ matrix.archs }} --without stitching out/${{ matrix.output }}
+        zip --symlinks -r opencv_ios_${{ matrix.output }}.zip out/${{ matrix.output }}/opencv2.framework
+        zip --symlinks -r opencv_ios_${{ matrix.output }}_build_data.zip out/${{ matrix.output }}/build
+    - uses: actions/upload-artifact@v4
+      with:
+        name: ios_${{ matrix.output }}_framework
+        path: opencv_ios_${{ matrix.output }}.zip
+    - uses: actions/upload-artifact@v4
+      with:
+        name: ios_${{ matrix.output }}_build_data
+        path: opencv_ios_${{ matrix.output }}_build_data.zip
+
+  package-ios:
+    runs-on: macos-latest
+    needs: build-ios-framework
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/download-artifact@v4
+      with:
+        name: ios_iphoneos_framework
+    - uses: actions/download-artifact@v4
+      with:
+        name: ios_iphonesimulator_framework
+    - name: Create xcframework
+      run: |-
+        unzip opencv_ios_iphoneos.zip
+        unzip opencv_ios_iphonesimulator.zip
+        mkdir -p out/xcframework
+        xcodebuild -create-xcframework -framework out/iphoneos/opencv2.framework -framework out/iphonesimulator/opencv2.framework -output out/xcframework/opencv2.xcframework
+    - name: Validate xcframework
+      run: |-
+        python3 - <<'PY'
+        import os
+        import plistlib
+        import subprocess
+
+        root = "out/xcframework/opencv2.xcframework"
+        info_plist = os.path.join(root, "Info.plist")
+        expected = {
+            "ios-arm64": ("ios", None, ["arm64"]),
+            "ios-arm64-simulator": ("ios", "simulator", ["arm64"]),
+        }
+
+        with open(info_plist, "rb") as plist_file:
+            info = plistlib.load(plist_file)
+
+        libraries = {
+            library["LibraryIdentifier"]: library
+            for library in info["AvailableLibraries"]
+        }
+
+        if set(libraries) != set(expected):
+            raise SystemExit(f"Unexpected library identifiers: {sorted(libraries)}")
+
+        for identifier, (platform, variant, architectures) in expected.items():
+            library = libraries[identifier]
+            if library["SupportedPlatform"] != platform:
+                raise SystemExit(f"{identifier}: unexpected platform")
+            if library.get("SupportedPlatformVariant") != variant:
+                raise SystemExit(f"{identifier}: unexpected platform variant")
+            if library["SupportedArchitectures"] != architectures:
+                raise SystemExit(f"{identifier}: unexpected Info.plist archs")
+
+            binary_path = os.path.join(root, identifier, library["BinaryPath"])
+            actual_archs = subprocess.check_output(
+                ["lipo", "-archs", binary_path],
+                text=True,
+            ).strip().split()
+            if actual_archs != architectures:
+                raise SystemExit(f"{identifier}: unexpected binary archs {actual_archs}")
+        PY
+    - name: Write build manifest
+      run: |-
+        {
+          echo "OpenCV commit: $GITHUB_SHA"
+          echo "opencv_contrib commit: $(git ls-tree HEAD opencv_contrib | awk '{print $3}')"
+          echo "Runner: $RUNNER_OS $RUNNER_ARCH"
+          echo "Image: ${ImageOS:-unknown} ${ImageVersion:-unknown}"
+          echo "Deployment target: 17.0"
+          echo "Device archs: arm64"
+          echo "Simulator archs: arm64"
+          echo
+          echo "Xcode:"
+          xcodebuild -version
+          echo
+          echo "XCFramework Info.plist:"
+          plutil -p out/xcframework/opencv2.xcframework/Info.plist
+          echo
+          echo "Binary architectures:"
+          lipo -info out/xcframework/opencv2.xcframework/ios-arm64/opencv2.framework/opencv2
+          lipo -info out/xcframework/opencv2.xcframework/ios-arm64-simulator/opencv2.framework/opencv2
+        } > opencv_ios_manifest.txt
+    - name: Zip xcframework
+      run: |-
+        zip --symlinks -r opencv_ios_xcframework.zip out/xcframework/opencv2.xcframework
+    - uses: actions/upload-artifact@v4
+      with:
+        name: ios_lib
+        path: opencv_ios_xcframework.zip
+    - uses: actions/upload-artifact@v4
+      with:
+        name: ios_manifest
+        path: opencv_ios_manifest.txt
