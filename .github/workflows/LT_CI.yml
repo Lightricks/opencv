@@ -25,7 +25,7 @@ jobs:
         IPHONEOS_DEPLOYMENT_TARGET: "17.0"
       run: |-
         mkdir -p out/${{ matrix.output }}
-        python3 platforms/ios/build_framework.py --iphoneos_deployment_target $IPHONEOS_DEPLOYMENT_TARGET --contrib opencv_contrib --build_only_specified_archs ${{ matrix.arch_flag }} ${{ matrix.archs }} --without stitching out/${{ matrix.output }}
+        python3 platforms/ios/build_framework.py --iphoneos_deployment_target $IPHONEOS_DEPLOYMENT_TARGET --contrib opencv_contrib --build_only_specified_archs ${{ matrix.arch_flag }} ${{ matrix.archs }} --without stitching --without dnn out/${{ matrix.output }}
         zip --symlinks -r opencv_ios_${{ matrix.output }}.zip out/${{ matrix.output }}/opencv2.framework
         zip --symlinks -r opencv_ios_${{ matrix.output }}_build_data.zip out/${{ matrix.output }}/build
     - uses: actions/upload-artifact@v4
